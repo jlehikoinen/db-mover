@@ -258,7 +258,7 @@ Add Heroku app URI to Webhook URIs:
 
 `https://<app name>.herokuapp.com/webhook`
 
-Webhooks Status should change to "Enabled" if everything went ok.
+Webhooks Status should change to "Enabled" after clicking the "Add" button.
 
 Test
 ----
@@ -275,7 +275,7 @@ Take a couple of photos and upload them to Dropbox. See the log for debug inform
 
 Go to Dropbox and see the photos in new location: e.g. `My Media Archive/2015/2015-03`
 
-Check the log file: `My Logs/db-webhook.txt`
+Check the Dropbox log file: `My Logs/db-webhook.txt`
 
 _Sometimes the web app reacts "slowly" and doesn't move the file to target folder instantly. This is because of the Redis lockfile and Dropbox webhook /delta behavior. To work around this, edit some file in Dropbox or take another photo and upload it. This should be fixed in the future.._
 
