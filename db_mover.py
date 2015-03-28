@@ -41,7 +41,9 @@ logger.addHandler(handler)
 
 
 def get_log_file():
-    """Download log file from Dropbox."""
+    """Download log file from Dropbox.
+    Uses DropboxClient's 'get_file' instance method.
+    """
 
     if item_exists(cfg.db_log):
         logger.debug('Downloading log file')
@@ -53,7 +55,9 @@ def get_log_file():
 
 
 def upload_log_file():
-    """Upload log file to Dropbox."""
+    """Upload log file to Dropbox.
+    Uses DropboxClient's 'put_file' instance method.
+    """
 
     logger.debug('Uploading log file')
     f = open(cfg.local_log, 'rb')
@@ -61,7 +65,8 @@ def upload_log_file():
 
 
 def item_exists(path):
-    """Check if file or folder exists in Dropbox
+    """Check if file or folder exists in Dropbox.
+    Uses DropboxClient's 'metadata' instance method.
 
     Parameters
         path: complete Dropbox file path
@@ -123,6 +128,7 @@ def get_info_from_file_name(path):
 
 def create_dir_tree(target_path, year, month, media_type=''):
     """Create directory tree if it doesn't exist.
+    Uses DropboxClient's 'file_create_folder' instance method.
 
     Parameters
         target_path: base path defined in config
@@ -151,7 +157,8 @@ def create_dir_tree(target_path, year, month, media_type=''):
 
 def move_file(source_path, target_path, file_name):
     """Move file to target folder.
-    Rename the file if it already exists in target folder.
+    Rename the file (=add timestamp) if it already exists in target folder.
+    Uses DropboxClient's 'file_move' instance method.
 
     Parameters
         source_path: source folder defined in config
