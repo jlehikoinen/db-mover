@@ -98,6 +98,8 @@ Deploy your changes:
 
 `$ git push heroku master`
 
+If everything went ok, jump to the [Configure Dropbox webhook](https://github.com/jlehikoinen/db-mover#configure-dropbox-webhook) section of this page.
+
 Deploy manually
 ---------------
 
