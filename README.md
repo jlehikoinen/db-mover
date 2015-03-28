@@ -27,13 +27,13 @@ The main script `db_mover.py` creates a key-value pair to Redis when new files a
 Main steps
 ----------
 
-1. Create a new Dropbox app
-2. Deploy to Heroku
-3. Configure Dropbox webhook
-4. Test
+* Create a new Dropbox app
+* Deploy to Heroku
+* Configure Dropbox webhook
+* Test
 
-1. Create a new Dropbox app
----------------------------
+Create a new Dropbox app
+------------------------
 
 Go to [Dropbox App Console](https://www.dropbox.com/developers/apps) and Create app.
 
@@ -65,8 +65,8 @@ Example output:
 {"referral_link": "https://db.tt/2wbthj", "display_name": "John Doe", "uid": 1234567, "locale": "en", "email_verified": true, "team": null, "quota_info": {"datastores": 0, "shared": 3558555318, "quota": 1121523335168, "normal": 126771121734}, "is_paired": false, "country": "FI", "name_details": {"familiar_name": "John", "surname": "Doe", "given_name": "John"}, "email": "john@doe.net"}
 ```
 
-2a. Deploy with "Deploy to Heroku" button
------------------------------------------
+Deploy with "Deploy to Heroku" button
+-------------------------------------
 
 The easiest way to deploy this app to Heroku is to use the button below. If you want to do the deployment part more manually, jump to the next section.
 
@@ -98,8 +98,8 @@ Deploy your changes:
 
 `$ git push heroku master`
 
-2b. Deploy manually
--------------------
+Deploy manually
+---------------
 
 ### Create a local Heroku project
 
@@ -249,8 +249,8 @@ Check Heroku logs that everything is fine so far:
 
 You should already see few events in the log after the initial deployment and configuration changes. Hopefully no tracebacks!
 
-3. Configure Dropbox webhook
-----------------------------
+Configure Dropbox webhook
+-------------------------
 
 Go back to [Dropbox App Console](https://www.dropbox.com/developers/apps) > Your app
 
@@ -260,8 +260,8 @@ Add Heroku app URI to Webhook URIs:
 
 Webhooks Status should change to "Enabled" if everything went ok.
 
-4. Test
--------
+Test
+----
 
 Tail the Heroku log stream to see what's happening in real time. You should already see few events in the log after the initial deployment and Dropbox webhook requests.
 
