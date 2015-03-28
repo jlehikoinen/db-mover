@@ -1,10 +1,6 @@
 Photo Management using Dropbox Core API and Heroku
 ==================================================
 
-### _Work in progress.._
-
----
-
 This is the 3rd iteration of my photo and video management solution. The first version can be found [here](https://github.com/jlehikoinen/media-management-helper). I wanted to have the solution to be independent of running anything at home on a Mac mini and run this completely in the cloud. This was also good opportunity to learn how Heroku works and how to interact with Dropbox Core API.
 
 This version is using [Dropbox Core API  webhooks](https://www.dropbox.com/developers/webhooks/docs) and Python web app running in Heroku. The web app part is heavily based on the [Markdown Webhook](https://github.com/dropbox/mdwebhook) example.
@@ -76,13 +72,15 @@ The easiest way to deploy this app to Heroku is to use the button below. If you 
 
 [![Deploy](https://www.herokucdn.com/deploy/button.png)](https://heroku.com/deploy)
 
-_pic ???_
-
-Create a new Heroku projects folder (optional):
+After the app has finished building, create a new Heroku projects folder (optional):
 
 `$ mkdir ~/heroku-projects`
 
 `$ cd ~/heroku-projects`
+
+Login to your Heroku account:
+
+`$ heroku login`
 
 Clone the app from Heroku:
 
@@ -92,11 +90,11 @@ Clone the app from Heroku:
 
 Open `config.py` with a text editor and make your own adjustments.
 
-Make your first commit:
+Deploy your changes:
 
-`$ git commit -a -m "my configs"`
+`$ git add .`
 
-Push changes to Heroku:
+`$ git commit -am "my configs"`
 
 `$ git push heroku master`
 
@@ -116,10 +114,6 @@ Clone the project from GitHub:
 `$ git clone https://github.com/jlehikoinen/db-mover.git`
 
 `$ cd db-mover`
-
-Remove existing `.git` folder:
-
-`$ rm -rf .git`
 
 Open `config.py` with a text editor and make your own adjustments.
 
@@ -156,11 +150,11 @@ Initialize a fresh Git repository:
 
 Add all files:
 
-`$ git add --all`
+`$ git add .`
 
 Make your first commit:
 
-`$ git commit -a -m "my configs"`
+`$ git commit -am "my configs"`
 
 ### Create and configure the Heroku app
 

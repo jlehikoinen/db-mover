@@ -10,10 +10,10 @@
   ],
   "env": {
     "APP_SECRET": {
-      "description": "Your Dropbox app secret (found at dropbox.com/developers/apps)"
+      "description": "Your Dropbox app secret (found at Dropbox App Console)"
     },
     "ACCESS_TOKEN": {
-      "description": "Your Dropbox app access token (found at dropbox.com/developers/apps)"
+      "description": "Your Dropbox app access token (found at Dropbox App Console)"
     },
     "FLASK_SECRET_KEY": {
       "description": "A secret key for cookie signing",
