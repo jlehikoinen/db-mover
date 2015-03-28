@@ -14,6 +14,7 @@ The main script `db_mover.py` creates a key-value pair to Redis when new files a
 **Requirements:**
 
 * [Dropbox](https://www.dropbox.com/) account
+* [Carousel](https://itunes.apple.com/us/app/carousel-by-dropbox/id825931374?mt=8) app
 * [Heroku](https://www.heroku.com/) account
 * [Heroku Toolbelt](https://toolbelt.heroku.com) installed
 * Credit card for registering Heroku add-ons
