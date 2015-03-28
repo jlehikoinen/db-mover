@@ -55,7 +55,7 @@ Generate access token
 
 Write down the App secret and the Generated access token.
 
-Test Dropbox Core API with cURL using the Generated access token:
+Test Dropbox Core API with cURL using the access token:
 
 `$ curl https://api.dropbox.com/1/account/info -H "Authorization: Bearer <access token>"`
 
@@ -128,7 +128,7 @@ Open `config.py` with a text editor and make your own adjustments.
 9. Lockfile expiration (optional)
 10. Year & month regex (optional)
 
-Create your own Flask secret key
+Create a Flask secret key:
 
 `$ python`
 
@@ -198,11 +198,11 @@ Add time zone (optional):
 
 `$ heroku config:add TZ='Europe/Helsinki'`
 
-This will change the Dyno time zone, but not the Heroku log stream time zone.
+This will change the Dyno time zone so the Dropbox log file will get correct time stamps, but the Heroku log stream remains unaffected.
 
 List of time zones: [Wikipedia](http://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
 
-With [Papertrail](https://addons.heroku.com/papertrail) add-on you can configure time zone correctly.
+With [Papertrail](https://addons.heroku.com/papertrail) add-on you can configure the time zone correctly.
 
 Verify your Heroku app configuration:
 
@@ -247,7 +247,7 @@ Check Heroku logs that everything is fine so far:
 
 `$ heroku logs`
 
-You should already see few events in the log after the initial deployment and configuration changes. Hopefully no tracebacks!
+You should already see few events in the log after the initial deployment and configuration changes.
 
 Configure Dropbox webhook
 -------------------------
@@ -284,7 +284,9 @@ After the testing, scale down the Heroku dyno (optional):
 Monitoring
 ----------
 
-Monitor Redis To Go usage:
+Manage your app on [Heroku Dashboard](https://dashboard.heroku.com) > App name.
+
+Monitor Redis To Go usage from [Heroku Dashboard](https://dashboard.heroku.com) > App name > Add-ons > Redis To Go or by entering following command:
 
 `$ heroku addons:open redistogo`
 
