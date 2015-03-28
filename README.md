@@ -1,7 +1,7 @@
 Photo Management using Dropbox Core API and Heroku
 ==================================================
 
-This is the 3rd iteration of my photo and video management solution. The first version can be found [here](https://github.com/jlehikoinen/media-management-helper). I wanted to have the solution to be independent of running anything at home on a Mac mini and run this completely in the cloud. This was also good opportunity to learn how Heroku works and how to interact with Dropbox Core API.
+This is the 3rd iteration of my photo and video management solution. The first version can be found [here](https://github.com/jlehikoinen/media-management-helper). I wanted to have the solution to be independent of running anything at home on a Mac mini and run this completely in the cloud. This was also good opportunity to learn how Heroku works and how to interact with Dropbox Core API. See the complete photo management solution [here](http://www.trrt.me/#!./md/photo_management.md).
 
 This version is using [Dropbox Core API  webhooks](https://www.dropbox.com/developers/webhooks/docs) and Python web app running in Heroku. The web app part is heavily based on the [Markdown Webhook](https://github.com/dropbox/mdwebhook) example.
 
