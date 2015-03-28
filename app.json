@@ -1,0 +1,26 @@
+{
+  "name": "DB Media Mover",
+  "description": "Photo Management using Dropbox Core API and Heroku",
+  "repository": "https://github.com/jlehikoinen/db-mover",
+  "website": "http://trrt.me",
+  "keywords": ["dropbox", "heroku", "python", "flask", "photo", "management"],
+  "success_url": "/",
+  "addons": [
+    "redistogo"
+  ],
+  "env": {
+    "APP_SECRET": {
+      "description": "Your Dropbox app secret (found at dropbox.com/developers/apps)"
+    },
+    "ACCESS_TOKEN": {
+      "description": "Your Dropbox app access token (found at dropbox.com/developers/apps)"
+    },
+    "FLASK_SECRET_KEY": {
+      "description": "A secret key for cookie signing",
+      "generator": "secret"
+    },
+    "TZ": {
+      "description": "Time zone (http://en.wikipedia.org/wiki/List_of_tz_database_time_zones)",
+    }
+  }
+}
