@@ -36,7 +36,6 @@ Main steps
 3. Configure Dropbox webhook
 4. Test
 
-
 1. Create a new Dropbox app
 ---------------------------
 

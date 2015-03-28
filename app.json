@@ -20,7 +20,7 @@
       "generator": "secret"
     },
     "TZ": {
-      "description": "Time zone (http://en.wikipedia.org/wiki/List_of_tz_database_time_zones)",
+      "description": "Time zone (http://en.wikipedia.org/wiki/List_of_tz_database_time_zones)"
     }
   }
 }
