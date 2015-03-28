@@ -86,7 +86,7 @@ Clone the app from Heroku:
 
 `$ heroku clone -a <app name>`
 
-`$ cd <app-name>`
+`$ cd <app name>`
 
 Open `config.py` with a text editor and make your own adjustments.
 
@@ -184,7 +184,7 @@ Redis To Go URL is added automatically to Heroku config.
 
 Add Dropbox app secret:
 
-`$ heroku config:add APP_SECRET='<access token>'`
+`$ heroku config:add APP_SECRET='<app secret>'`
 
 Add Dropbox access token:
 
@@ -192,7 +192,7 @@ Add Dropbox access token:
 
 Add Flask secret key:
 
-`$ heroku config:add FLASK_SECRET_KEY='<your_random_secret>'`
+`$ heroku config:add FLASK_SECRET_KEY='<your_random_key>'`
 
 Add time zone (optional):
 
@@ -252,7 +252,7 @@ You should already see few events in the log after the initial deployment and co
 Configure Dropbox webhook
 -------------------------
 
-Go back to [Dropbox App Console](https://www.dropbox.com/developers/apps) > Your app
+Go back to [Dropbox App Console](https://www.dropbox.com/developers/apps) > App name
 
 Add Heroku app URI to Webhook URIs:
 
