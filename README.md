@@ -111,11 +111,11 @@ Create a new Heroku projects folder (optional):
 
 `$ cd ~/heroku-projects`
 
-_Edit git clone_
+Clone the project from GitHub:
 
-`$ git clone https://github.com/jlehikoinen/xxx.git`
+`$ git clone https://github.com/jlehikoinen/db-mover.git`
 
-`$ cd xxx`
+`$ cd db-mover`
 
 Remove existing `.git` folder:
 
