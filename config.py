@@ -1,6 +1,5 @@
 """
 Own configs for Heroku
-
 """
 
 # Source folder location
