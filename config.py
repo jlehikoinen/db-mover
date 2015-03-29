@@ -8,7 +8,7 @@ TODO:
 source_dir = '/Camera Uploads'
 
 # Use one or two target folders
-one_target_dir = True
+one_target_dir = False
 
 # One common target folder location
 target_dir_common = '/My Media Archive'
@@ -16,8 +16,10 @@ target_dir_common = '/My Media Archive'
 # or
 
 # Two separate target folder locations
-target_dir1 = '/My Photos'
-target_dir2 = '/My Videos'
+# target_dir1 = '/My Photos'
+# target_dir2 = '/My Videos'
+target_dir1 = '/Kuvat ja videot/Kuvat'
+target_dir2 = '/Kuvat ja videot/Videot'
 
 # Unsorted files location
 unsorted_dir = '/Unsorted Media Files'
@@ -28,8 +30,8 @@ vids_types = ['.mov', '.MOV']
 
 # Photo and video subfolder descriptions
 # These are used if one_target_dir is False
-pics_desc = '-photos'
-vids_desc = '-videos'
+pics_desc = '-kuvat'
+vids_desc = '-videot'
 
 # Dropbox log file location
 db_log = '/My Logs/db-webhook.txt'
