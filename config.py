@@ -1,7 +1,5 @@
 """
-TODO:
-- 1 or more files in buffer, run /delta has_more again?
-- Logging should be separated from the main hook
+Own configs for Heroku
 """
 
 # Source folder location
@@ -16,8 +14,6 @@ target_dir_common = '/My Media Archive'
 # or
 
 # Two separate target folder locations
-# target_dir1 = '/My Photos'
-# target_dir2 = '/My Videos'
 target_dir1 = '/Kuvat ja videot/Kuvat'
 target_dir2 = '/Kuvat ja videot/Videot'
 
