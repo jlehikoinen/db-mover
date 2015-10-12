@@ -30,7 +30,7 @@ pics_desc = '-kuvat'
 vids_desc = '-videot'
 
 # Dropbox log file location
-db_log = '/My Logs/db-webhook.txt'
+db_log = '/Apps/My Logs/db-webhook.txt'
 
 # Logging
 log_date_format = '%d.%m.%Y %H.%M.%S'
