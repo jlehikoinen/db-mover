@@ -18,7 +18,7 @@ target_dir1 = '/Kuvat ja videot/Kuvat'
 target_dir2 = '/Kuvat ja videot/Videot'
 
 # Unsorted files location
-unsorted_dir = '/Unsorted Media Files'
+unsorted_dir = '/Apps/DB Mover/Unsorted Media Files'
 
 # File types
 pics_types = ['.jpg', '.JPG']
@@ -30,7 +30,7 @@ pics_desc = '-kuvat'
 vids_desc = '-videot'
 
 # Dropbox log file location
-db_log = '/Apps/My Logs/db-webhook.txt'
+db_log = '/Apps/DB Mover/Logs/db-webhook.txt'
 
 # Logging
 log_date_format = '%d.%m.%Y %H.%M.%S'
