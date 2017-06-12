@@ -5,15 +5,24 @@ import re
 import time
 
 import redis
-from dropbox.client import DropboxClient
-from dropbox.rest import ErrorResponse
+import dropbox
 import config as cfg
+
+"""
+TODO
+
+- test files_download_to_file() ???
+- handle if file or folder exists
+
+"""
+
+
 
 # API token
 access_token = os.environ['ACCESS_TOKEN']
 
-# DropboxClient instance
-db_client = DropboxClient(access_token)
+# Dropbox instance
+db_client = dropbox.Dropbox(access_token)
 
 # Redis
 redis_url = os.environ['REDISTOGO_URL']
@@ -42,31 +51,34 @@ logger.addHandler(handler)
 
 def get_log_file():
     """Download log file from Dropbox.
-    Uses DropboxClient's 'get_file' instance method.
+    Uses Dropbox's 'files_download' method
     """
 
     if item_exists(cfg.db_log):
         logger.debug('Downloading log file')
-        out = open(cfg.local_log, 'wb')
-        with db_client.get_file(cfg.db_log) as f:
-            out.write(f.read())
+        outfile = open(cfg.local_log, 'wb')
+        md, res = db_client.files_download(cfg.db_log)
+
+        with outfile as f:
+            outfile.write(res.content)
     else:
         logger.debug('No log file found in Dropbox. Using local template.')
 
 
 def upload_log_file():
     """Upload log file to Dropbox.
-    Uses DropboxClient's 'put_file' instance method.
+    Uses Dropbox's 'files_upload'
     """
 
     logger.debug('Uploading log file')
-    f = open(cfg.local_log, 'rb')
-    response = db_client.put_file(cfg.db_log, f, overwrite=True)
+    mode = dropbox.files.WriteMode.overwrite
+    with open(cfg.local_log, 'rb') as f:
+        response = db_client.files_upload(f.read(), cfg.db_log, mode)
 
 
 def item_exists(path):
     """Check if file or folder exists in Dropbox.
-    Uses DropboxClient's 'metadata' instance method.
+    Uses Dropbox's 'files_get_metadata' method
 
     Parameters
         path: complete Dropbox file path
@@ -77,16 +89,15 @@ def item_exists(path):
     """
 
     try:
-        path_metadata = db_client.metadata(path)
+        path_metadata = db_client.files_get_metadata(path, include_deleted=True)
         # logger.debug('File metadata: ' + str(path_metadata))
         # Check if file is 'deleted'
-        if 'is_deleted' in path_metadata:
+        if (isinstance(path_metadata, dropbox.files.DeletedMetadata)):
             logger.debug(path + ' is deleted')
             return False
-    except ErrorResponse as e:
-        if e.status == 404:
-            logger.debug('http response code: ' + str(e.status))
-            return False
+    except dropbox.exceptions.ApiError as e:
+        print('*** Dropbox API error', e)
+        return False
 
     return True
 
@@ -128,7 +139,7 @@ def get_info_from_file_name(path):
 
 def create_dir_tree(target_path, year, month, media_type=''):
     """Create directory tree if it doesn't exist.
-    Uses DropboxClient's 'file_create_folder' instance method.
+    Uses Dropbox's 'files_create_folder' method
 
     Parameters
         target_path: base path defined in config
@@ -146,11 +157,11 @@ def create_dir_tree(target_path, year, month, media_type=''):
     logger.debug('Creating new folder ' + complete_path)
 
     try:
-        db_client.file_create_folder(complete_path)
-    except ErrorResponse as e:
-        if e.status == 403:
-            logger.debug('Target folder ' + complete_path +
-                         ' already exists')
+        db_client.files_create_folder(complete_path)
+    except dropbox.exceptions.ApiError as e:
+        print('*** Dropbox API error', e)
+        logger.debug('Target folder ' + complete_path +
+                         ' already exists?')
 
     return complete_path
 
@@ -158,7 +169,7 @@ def create_dir_tree(target_path, year, month, media_type=''):
 def move_file(source_path, target_path, file_name):
     """Move file to target folder.
     Rename the file (=add timestamp) if it already exists in target folder.
-    Uses DropboxClient's 'file_move' instance method.
+    Uses Dropbox's 'files_move' method
 
     Parameters
         source_path: source folder defined in config
@@ -173,15 +184,16 @@ def move_file(source_path, target_path, file_name):
     logger.info('Moving ' + file_name + ' to ' + last_path)
 
     try:
-        db_client.file_move(source_path,
-                            os.path.join(target_path, file_name))
-    except ErrorResponse as e:
-        if e.status == 403:
-            file_name = file_name_base + '_' + date_time + extension
-            logger.info('File already exists in ' + last_path
-                        + ' folder. New name: ' + file_name)
-            db_client.file_move(source_path,
-                                os.path.join(target_path, file_name))
+        db_client.files_move(source_path,
+                             os.path.join(target_path, file_name))
+    except dropbox.exceptions.ApiError as e:
+        print('*** Dropbox API error', e)
+        print('Renaming file')
+        file_name = file_name_base + '_' + date_time + extension
+        logger.info('File already exists in ' + last_path
+                    + ' folder. New name: ' + file_name)
+        db_client.files_move(source_path,
+                             os.path.join(target_path, file_name))
 
 
 def parse_time_taken(item, item_info):
@@ -236,7 +248,8 @@ def main(uid):
         while has_more:
 
             # Include cursor, prefix_path and include_media_info in result
-            result = db_client.delta(cursor, cfg.source_dir, include_media_info)
+            # result = db_client.delta(cursor, cfg.source_dir, include_media_info)
+            result = dbx.files_list_folder(cfg.source_dir, recursive=True, include_media_info=True)
 
             # Iterate over metadata contents
             for path, item in result['entries']:
@@ -269,11 +282,13 @@ def main(uid):
                 if 'photo_info' in item:
 
                     is_photo = True
+                    # TODO
                     year, month = parse_time_taken(item, 'photo_info')
 
                 elif 'video_info' in item:
 
                     is_video = True
+                    # TODO
                     year, month = parse_time_taken(item, 'video_info')
 
                 else:
