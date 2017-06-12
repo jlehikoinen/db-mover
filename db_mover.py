@@ -4,7 +4,7 @@ import os
 import re
 import time
 
-import redis
+# import redis
 import dropbox
 import config as cfg
 
@@ -13,6 +13,10 @@ TODO
 
 - test files_download_to_file() ???
 - handle if file or folder exists
+- Dropbox API broken temporarily
+- files_list_folder_continue(cursor) or ignore completely?
+- log file handling
+
 
 """
 
@@ -25,15 +29,12 @@ access_token = os.environ['ACCESS_TOKEN']
 db_client = dropbox.Dropbox(access_token)
 
 # Redis
-redis_url = os.environ['REDISTOGO_URL']
-redis_client = redis.from_url(redis_url)
+# redis_url = os.environ['REDISTOGO_URL']
+# redis_client = redis.from_url(redis_url)
 
 # Dropbox date & time format
-# Example: Sun, 25 Jan 2015 18:36:24 +0000
-db_date_format = '%a, %d %b %Y %H:%M:%S +0000'
-
-# Include Dropbox /delta media info metadata
-include_media_info = True
+# Example: 2017-06-07 14:25:03
+db_date_format = '%Y-%m-%d %H:%M:%S'
 
 # Logging
 logging.basicConfig(level=logging.DEBUG)
@@ -91,6 +92,7 @@ def item_exists(path):
     try:
         path_metadata = db_client.files_get_metadata(path, include_deleted=True)
         # logger.debug('File metadata: ' + str(path_metadata))
+
         # Check if file is 'deleted'
         if (isinstance(path_metadata, dropbox.files.DeletedMetadata)):
             logger.debug(path + ' is deleted')
@@ -151,17 +153,17 @@ def create_dir_tree(target_path, year, month, media_type=''):
         complete_path: full target path string (e.g. path/to/target/2015/2015-02)
     """
 
-    complete_path = target_path + '/' + year + '/' + year + \
-        '-' + month + media_type
+    complete_path ='%s/%s/%s-%s%s' % (target_path, year, year, month, media_type)
+
+    # if not item_exists(complete_path):
 
     logger.debug('Creating new folder ' + complete_path)
-
     try:
         db_client.files_create_folder(complete_path)
     except dropbox.exceptions.ApiError as e:
-        print('*** Dropbox API error', e)
+        # print('*** Dropbox API error', e)
         logger.debug('Target folder ' + complete_path +
-                         ' already exists?')
+                         ' probably already exists?')
 
     return complete_path
 
@@ -196,12 +198,11 @@ def move_file(source_path, target_path, file_name):
                              os.path.join(target_path, file_name))
 
 
-def parse_time_taken(item, item_info):
+def parse_time_taken(item):
     """Parse time_taken attribute from media info metadata.
 
     Parameters
         item: metadata item
-        item_info: photo_info or video_info
 
     Returns
         year: string, e.g. 2015
@@ -212,47 +213,58 @@ def parse_time_taken(item, item_info):
     month = ''
 
     # If time_taken value exists
-    if (item[item_info]['time_taken'] is not None):
-        logger.debug('Time taken: ' + item[item_info]['time_taken'])
+    time_taken_value = str(item.media_info.get_metadata().time_taken)
+    if (time_taken_value is not None):
+        logger.debug('Time taken: ' + time_taken_value)
 
-        d = datetime.strptime(item[item_info]['time_taken'], db_date_format)
-        # formatted_time = d.strftime(cfg.log_date_format)
+        d = datetime.strptime(time_taken_value, db_date_format)
         year = d.strftime('%Y')
         month = d.strftime('%m')
 
     return year, month
 
-
-def main(uid):
+# Temp
+# def main(uid):
+def main():
     """Main hook.
 
     Parameters
         uid: user id from webhook notification request
     """
 
+    # Temp
+    cfg.source_dir = '/Kuvat ja videot/Slo-mos'
+    cfg.target_dir1 = '/Apps/DB Mover/test1'
+    cfg.target_dir2 = '/Apps/DB Mover/test2'
+
     logger.debug('STARTING WEBHOOK')
-    logger.debug('UID: ' + str(uid))
+    # logger.debug('UID: ' + str(uid))
 
     # Check if Redis lockfile exists
-    lockfile_exists = redis_client.exists('lockfile')
-    logger.debug('Lockfile exists: ' + str(lockfile_exists))
+    # lockfile_exists = redis_client.exists('lockfile')
+    # logger.debug('Lockfile exists: ' + str(lockfile_exists))
+
+    # Temp
+    lockfile_exists = False
 
     if not lockfile_exists:
 
         # /delta cursor for the user (None the first time)
-        cursor = redis_client.hget('cursors', uid)
+        # cursor = redis_client.hget('cursors', uid)
 
         has_more = True
 
         # Loop de loop
         while has_more:
 
-            # Include cursor, prefix_path and include_media_info in result
-            # result = db_client.delta(cursor, cfg.source_dir, include_media_info)
-            result = dbx.files_list_folder(cfg.source_dir, recursive=True, include_media_info=True)
+            try:
+                result = db_client.files_list_folder(cfg.source_dir, include_media_info=True)
+            except dropbox.exceptions.ApiError as e:
+                print('*** Dropbox API error', e)
+                break
 
             # Iterate over metadata contents
-            for path, item in result['entries']:
+            for item in result.entries:
 
                 # Default values
                 is_photo = False
@@ -262,35 +274,31 @@ def main(uid):
                 target_path = ''
 
                 # Skip deleted files and folders
-                if (item is None or item['is_dir']):
+                if (isinstance(item, dropbox.files.DeletedMetadata) or
+                    isinstance(item, dropbox.files.FolderMetadata)):
                     continue
 
                 # Create a lockfile to Redis and set expiration
-                redis_client.setex('lockfile', 'IAMALOCKFILE', cfg.lockfile_exp)
+                # redis_client.setex('lockfile', 'IAMALOCKFILE', cfg.lockfile_exp)
 
                 # Item metadata
                 logger.debug('File metadata: ' + str(item))
 
                 # Download log file
-                get_log_file()
+                # get_log_file()
 
                 # Get source path and file name
-                source_path = item.get('path')
+                source_path = item.path_lower
                 file_name = os.path.basename(source_path)
+                _, extension = os.path.splitext(source_path)
+                print file_name
 
-                # Find out if there's year and month values available
-                if 'photo_info' in item:
-
-                    is_photo = True
-                    # TODO
-                    year, month = parse_time_taken(item, 'photo_info')
-
-                elif 'video_info' in item:
-
-                    is_video = True
-                    # TODO
-                    year, month = parse_time_taken(item, 'video_info')
-
+                # Find out if there's media info available
+                if (item.media_info is not None and
+                not item.media_info.is_pending()):
+                    print item.media_info.get_metadata().time_taken
+                    year, month = parse_time_taken(item)
+                    print year, month
                 else:
                     # Try parsing year, month and extension from file name
                     year, month, extension = get_info_from_file_name(source_path)
@@ -298,11 +306,13 @@ def main(uid):
                                  + year + ' ' + month)
                     logger.debug('File extension: ' + extension)
 
-                    # Validate file extension
-                    if extension in cfg.pics_types:
-                        is_photo = True
-                    elif extension in cfg.vids_types:
-                        is_video = True
+                # Validate file extension
+                if extension in cfg.pics_types:
+                    is_photo = True
+                    print "photo"
+                elif extension in cfg.vids_types:
+                    is_video = True
+                    print "video"
 
                 # Build target folder path
                 if year and month:
@@ -327,21 +337,23 @@ def main(uid):
 
                 # Move file(s)
                 if target_path:
-                    move_file(source_path, target_path, file_name)
+                    # move_file(source_path, target_path, file_name)
+                    print "move file"
                 else:
                     # Unsorted folder will be created automatically
                     # if it doesn't exist
-                    move_file(source_path, cfg.unsorted_dir, file_name)
+                    # move_file(source_path, cfg.unsorted_dir, file_name)
+                    print "passing unsorted move file"
 
                 # Upload log
-                upload_log_file()
+                # upload_log_file()
 
             # Update cursor
-            cursor = result['cursor']
-            redis_client.hset('cursors', uid, cursor)
+            # cursor = result['cursor']
+            # redis_client.hset('cursors', uid, cursor)
 
             # Repeat only if there's more to do
-            has_more = result['has_more']
+            has_more = result.has_more
 
 if __name__ == "__main__":
     main()
