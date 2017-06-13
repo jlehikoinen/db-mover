@@ -11,15 +11,13 @@ import config as cfg
 """
 TODO
 
-- test files_download_to_file() ???
-- handle if file or folder exists
 - Dropbox API broken temporarily
-- files_list_folder_continue(cursor) or ignore completely?
-- log file handling
+- Test Python requirements
+- Possibly existing cursor and 'files_list_folder_continue' method are ignored
+- log file download/upload testing?
 
 
 """
-
 
 
 # API token
@@ -49,19 +47,14 @@ logger.addHandler(handler)
 
 # Helper functions
 
-
 def get_log_file():
     """Download log file from Dropbox.
-    Uses Dropbox's 'files_download' method
+    Uses Dropbox's 'files_download_to_file' method
     """
 
     if item_exists(cfg.db_log):
         logger.debug('Downloading log file')
-        outfile = open(cfg.local_log, 'wb')
-        md, res = db_client.files_download(cfg.db_log)
-
-        with outfile as f:
-            outfile.write(res.content)
+        db_client.files_download_to_file(cfg.local_log, cfg.db_log)
     else:
         logger.debug('No log file found in Dropbox. Using local template.')
 
@@ -223,7 +216,7 @@ def parse_time_taken(item):
 
     return year, month
 
-# Temp
+# Temp ???
 # def main(uid):
 def main():
     """Main hook.
@@ -231,11 +224,6 @@ def main():
     Parameters
         uid: user id from webhook notification request
     """
-
-    # Temp
-    cfg.source_dir = '/Kuvat ja videot/Slo-mos'
-    cfg.target_dir1 = '/Apps/DB Mover/test1'
-    cfg.target_dir2 = '/Apps/DB Mover/test2'
 
     logger.debug('STARTING WEBHOOK')
     # logger.debug('UID: ' + str(uid))
@@ -249,111 +237,94 @@ def main():
 
     if not lockfile_exists:
 
-        # /delta cursor for the user (None the first time)
-        # cursor = redis_client.hget('cursors', uid)
+        try:
+            result = db_client.files_list_folder(cfg.source_dir, include_media_info=True)
+        except dropbox.exceptions.ApiError as e:
+            print('*** Dropbox API error', e)
+            sys.exit(1)
 
-        has_more = True
+        if len(result.entries) > 0:
+            # Create a lockfile to Redis and set expiration
+            # redis_client.setex('lockfile', 'IAMALOCKFILE', cfg.lockfile_exp)
 
-        # Loop de loop
-        while has_more:
+            # Download log file
+            get_log_file()
+        else:
+            sys.exit(1)
 
-            try:
-                result = db_client.files_list_folder(cfg.source_dir, include_media_info=True)
-            except dropbox.exceptions.ApiError as e:
-                print('*** Dropbox API error', e)
-                break
+        # Iterate over metadata contents
+        for item in result.entries:
 
-            # Iterate over metadata contents
-            for item in result.entries:
+            # Default values
+            is_photo = False
+            is_video = False
+            year = ''
+            month = ''
+            target_path = ''
 
-                # Default values
-                is_photo = False
-                is_video = False
-                year = ''
-                month = ''
-                target_path = ''
+            # Skip deleted files and folders
+            if (isinstance(item, dropbox.files.DeletedMetadata) or
+                isinstance(item, dropbox.files.FolderMetadata)):
+                continue
 
-                # Skip deleted files and folders
-                if (isinstance(item, dropbox.files.DeletedMetadata) or
-                    isinstance(item, dropbox.files.FolderMetadata)):
-                    continue
+            # Item metadata
+            logger.debug('File metadata: ' + str(item))
 
-                # Create a lockfile to Redis and set expiration
-                # redis_client.setex('lockfile', 'IAMALOCKFILE', cfg.lockfile_exp)
+            # Get source path and file name
+            source_path = item.path_lower
+            file_name = os.path.basename(source_path)
+            _, extension = os.path.splitext(source_path)
 
-                # Item metadata
-                logger.debug('File metadata: ' + str(item))
+            # Find out if there's media info available
+            if (item.media_info is not None and
+            not item.media_info.is_pending()):
+                year, month = parse_time_taken(item)
+            else:
+                # Try parsing year, month and extension from file name
+                year, month, extension = get_info_from_file_name(source_path)
+                logger.debug('Year and month from file name: '
+                             + year + ' ' + month)
+                logger.debug('File extension: ' + extension)
 
-                # Download log file
-                # get_log_file()
+            # Validate file extension
+            if extension in cfg.pics_types:
+                is_photo = True
+            elif extension in cfg.vids_types:
+                is_video = True
 
-                # Get source path and file name
-                source_path = item.path_lower
-                file_name = os.path.basename(source_path)
-                _, extension = os.path.splitext(source_path)
-                print file_name
-
-                # Find out if there's media info available
-                if (item.media_info is not None and
-                not item.media_info.is_pending()):
-                    print item.media_info.get_metadata().time_taken
-                    year, month = parse_time_taken(item)
-                    print year, month
+            # Build target folder path
+            if year and month:
+                # Handle 1 vs 2 target folders option
+                if cfg.one_target_dir:
+                    if is_photo or is_video:
+                        target_path = create_dir_tree(cfg.target_dir_common,
+                                                      year, month)
                 else:
-                    # Try parsing year, month and extension from file name
-                    year, month, extension = get_info_from_file_name(source_path)
-                    logger.debug('Year and month from file name: '
-                                 + year + ' ' + month)
-                    logger.debug('File extension: ' + extension)
-
-                # Validate file extension
-                if extension in cfg.pics_types:
-                    is_photo = True
-                    print "photo"
-                elif extension in cfg.vids_types:
-                    is_video = True
-                    print "video"
-
-                # Build target folder path
-                if year and month:
-                    # Handle 1 vs 2 target folders option
-                    if cfg.one_target_dir:
-                        if is_photo or is_video:
-                            target_path = create_dir_tree(cfg.target_dir_common,
-                                                          year, month)
+                    if is_photo:
+                        target_path = create_dir_tree(cfg.target_dir1,
+                                                      year,
+                                                      month,
+                                                      media_type=cfg.pics_desc)
+                    elif is_video:
+                        target_path = create_dir_tree(cfg.target_dir2,
+                                                      year,
+                                                      month,
+                                                      media_type=cfg.vids_desc)
                     else:
-                        if is_photo:
-                            target_path = create_dir_tree(cfg.target_dir1,
-                                                          year,
-                                                          month,
-                                                          media_type=cfg.pics_desc)
-                        elif is_video:
-                            target_path = create_dir_tree(cfg.target_dir2,
-                                                          year,
-                                                          month,
-                                                          media_type=cfg.vids_desc)
-                        else:
-                            logger.debug('Invalid file type')
+                        logger.debug('Invalid file type')
 
-                # Move file(s)
-                if target_path:
-                    # move_file(source_path, target_path, file_name)
-                    print "move file"
-                else:
-                    # Unsorted folder will be created automatically
-                    # if it doesn't exist
-                    # move_file(source_path, cfg.unsorted_dir, file_name)
-                    print "passing unsorted move file"
+            # Move file(s)
+            if target_path:
+                # move_file(source_path, target_path, file_name)
+                print "move file"
+            else:
+                # Unsorted folder will be created automatically
+                # if it doesn't exist
+                # move_file(source_path, cfg.unsorted_dir, file_name)
+                print "passing unsorted move file"
 
-                # Upload log
-                # upload_log_file()
-
-            # Update cursor
-            # cursor = result['cursor']
-            # redis_client.hset('cursors', uid, cursor)
-
-            # Repeat only if there's more to do
-            has_more = result.has_more
+        # Upload log
+        upload_log_file()
 
 if __name__ == "__main__":
     main()
