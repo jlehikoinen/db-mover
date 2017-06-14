@@ -219,16 +219,17 @@ def main():
     # Check if Redis lockfile exists
     lockfile_exists = redis_client.exists('lockfile')
     logger.debug('Lockfile exists: ' + str(lockfile_exists))
-
     if lockfile_exists:
         sys.exit(1)
 
     try:
+        # Get Dropbox folder metadata
         result = db_client.files_list_folder(cfg.source_dir, include_media_info=True)
     except dropbox.exceptions.ApiError as e:
         logger.debug('*** Dropbox API error: %s' % e)
         sys.exit(1)
 
+    # Proceed, if at least one item in entries
     if len(result.entries) > 0:
         # Create a lockfile to Redis and set expiration
         redis_client.setex('lockfile', 'IAMALOCKFILE', cfg.lockfile_exp)
@@ -253,7 +254,7 @@ def main():
             isinstance(item, dropbox.files.FolderMetadata)):
             continue
 
-        # Item metadata
+        # Log item metadata
         logger.debug('File metadata: ' + str(item))
 
         # Get source path and file name
@@ -272,42 +273,45 @@ def main():
                          year + ' ' + month)
             logger.debug('File extension: ' + extension)
 
-        # Validate file extension
-        if extension in cfg.pics_types:
-            is_photo = True
-        elif extension in cfg.vids_types:
-            is_video = True
+        # If year or month info is not available,
+        # move file to unsorted folder
+        if year and month:
+            # If invalid file extension,
+            # move file to unsorted folder
+            if extension in cfg.pics_types:
+                is_photo = True
+            elif extension in cfg.vids_types:
+                is_video = True
+            else:
+                move_file(source_path, cfg.unsorted_dir, file_name)
+                continue
+        else:
+            move_file(source_path, cfg.unsorted_dir, file_name)
+            continue
 
         # Build target folder path
-        if year and month:
-            # Handle 1 vs 2 target folders option
-            if cfg.one_target_dir:
-                if is_photo or is_video:
-                    target_path = create_dir_tree(cfg.target_dir_common,
-                                                  year, month)
-            else:
-                if is_photo:
-                    target_path = create_dir_tree(cfg.target_dir1,
-                                                  year,
-                                                  month,
-                                                  media_type=cfg.pics_desc)
-                elif is_video:
-                    target_path = create_dir_tree(cfg.target_dir2,
-                                                  year,
-                                                  month,
-                                                  media_type=cfg.vids_desc)
-                else:
-                    logger.debug('Invalid file type')
+        # Handle 1 vs 2 target folders option
+        if cfg.one_target_dir:
+            if is_photo or is_video:
+                target_path = create_dir_tree(cfg.target_dir_common,
+                                              year, month)
+        else:
+            if is_photo:
+                target_path = create_dir_tree(cfg.target_dir1,
+                                              year,
+                                              month,
+                                              media_type=cfg.pics_desc)
+            elif is_video:
+                target_path = create_dir_tree(cfg.target_dir2,
+                                              year,
+                                              month,
+                                              media_type=cfg.vids_desc)
 
         # Move file(s)
         if target_path:
             move_file(source_path, target_path, file_name)
-        else:
-            # Unsorted folder will be created automatically
-            # if it doesn't exist
-            move_file(source_path, cfg.unsorted_dir, file_name)
 
-    # Upload log
+    # Upload log file
     upload_log_file()
 
 if __name__ == "__main__":
