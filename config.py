@@ -21,9 +21,8 @@ target_dir2 = '/Kuvat ja videot/Videot'
 
 
 # Temp
-source_dir = '/Kuvat ja videot/Slo-mos'
-target_dir1 = '/Apps/DB Mover/test1'
-target_dir2 = '/Apps/DB Mover/test2'
+target_dir1 = '/Apps/DB Mover/test_photos'
+target_dir2 = '/Apps/DB Mover/test_videos'
 
 
 
