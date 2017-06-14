@@ -12,11 +12,8 @@ import config as cfg
 """
 TODO
 
-- Dropbox API broken temporarily
-- Test Python requirements
 - Possibly existing cursor and 'files_list_folder_continue' method are ignored
 - log file download/upload testing?
-
 
 """
 
