@@ -12,7 +12,8 @@ import config as cfg
 """
 Notes
 
-- Possibly existing cursor and 'files_list_folder_continue' method are ignored temporarily
+- Possibly existing cursor and 'files_list_folder_continue' method are
+  ignored temporarily
 
 """
 
@@ -41,8 +42,8 @@ simple_format = logging.Formatter('%(asctime)s - %(levelname)s: %(message)s',
 handler.setFormatter(simple_format)
 logger.addHandler(handler)
 
-# Helper functions
 
+# Helper functions
 def get_log_file():
     """Download log file from Dropbox.
     Uses Dropbox's 'files_download_to_file' method
@@ -79,15 +80,15 @@ def item_exists(path):
     """
 
     try:
-        path_metadata = db_client.files_get_metadata(path, include_deleted=True)
-        # logger.debug('File metadata: ' + str(path_metadata))
+        path_md = db_client.files_get_metadata(path, include_deleted=True)
+        # logger.debug('File metadata: ' + str(path_md))
 
         # Check if file is 'deleted'
-        if (isinstance(path_metadata, dropbox.files.DeletedMetadata)):
+        if (isinstance(path_md, dropbox.files.DeletedMetadata)):
             logger.debug(path + ' is deleted')
             return False
     except dropbox.exceptions.ApiError as e:
-        print('*** Dropbox API error', e)
+        logger.debug('*** Dropbox API error: %s' % e)
         return False
 
     return True
@@ -142,7 +143,7 @@ def create_dir_tree(target_path, year, month, media_type=''):
         complete_path: full target path string (e.g. path/to/target/2015/2015-02)
     """
 
-    complete_path ='%s/%s/%s-%s%s' % (target_path, year, year, month, media_type)
+    complete_path = '%s/%s/%s-%s%s' % (target_path, year, year, month, media_type)
 
     # if not item_exists(complete_path):
 
@@ -150,9 +151,8 @@ def create_dir_tree(target_path, year, month, media_type=''):
     try:
         db_client.files_create_folder(complete_path)
     except dropbox.exceptions.ApiError as e:
-        # print('*** Dropbox API error', e)
-        logger.debug('Target folder ' + complete_path +
-                         ' probably already exists?')
+        # logger.debug('*** Dropbox API error: %s' % e)
+        logger.debug('Target folder ' + complete_path + ' already exists?')
 
     return complete_path
 
@@ -178,13 +178,11 @@ def move_file(source_path, target_path, file_name):
         db_client.files_move(source_path,
                              os.path.join(target_path, file_name))
     except dropbox.exceptions.ApiError as e:
-        print('*** Dropbox API error', e)
-        print('Renaming file')
+        logger.debug('*** Dropbox API error: %s' % e)
         file_name = file_name_base + '_' + date_time + extension
-        logger.info('File already exists in ' + last_path
-                    + ' folder. New name: ' + file_name)
-        db_client.files_move(source_path,
-                             os.path.join(target_path, file_name))
+        logger.info('File already exists in ' + last_path +
+                    ' folder. New name: ' + file_name)
+        db_client.files_move(source_path, os.path.join(target_path, file_name))
 
 
 def parse_time_taken(item):
@@ -222,96 +220,95 @@ def main():
     lockfile_exists = redis_client.exists('lockfile')
     logger.debug('Lockfile exists: ' + str(lockfile_exists))
 
-    if not lockfile_exists:
+    if lockfile_exists:
+        sys.exit(1)
 
-        try:
-            result = db_client.files_list_folder(cfg.source_dir, include_media_info=True)
-        except dropbox.exceptions.ApiError as e:
-            print('*** Dropbox API error', e)
-            sys.exit(1)
+    try:
+        result = db_client.files_list_folder(cfg.source_dir, include_media_info=True)
+    except dropbox.exceptions.ApiError as e:
+        logger.debug('*** Dropbox API error: %s' % e)
+        sys.exit(1)
 
-        if len(result.entries) > 0:
-            # Create a lockfile to Redis and set expiration
-            redis_client.setex('lockfile', 'IAMALOCKFILE', cfg.lockfile_exp)
-            # Download log file
-            get_log_file()
+    if len(result.entries) > 0:
+        # Create a lockfile to Redis and set expiration
+        redis_client.setex('lockfile', 'IAMALOCKFILE', cfg.lockfile_exp)
+        # Download log file
+        get_log_file()
+    else:
+        logger.debug('No new files in: %s. Exiting.' % cfg.source_dir)
+        sys.exit(1)
+
+    # Iterate over metadata contents
+    for item in result.entries:
+
+        # Default values
+        is_photo = False
+        is_video = False
+        year = ''
+        month = ''
+        target_path = ''
+
+        # Skip deleted files and folders
+        if (isinstance(item, dropbox.files.DeletedMetadata) or
+            isinstance(item, dropbox.files.FolderMetadata)):
+            continue
+
+        # Item metadata
+        logger.debug('File metadata: ' + str(item))
+
+        # Get source path and file name
+        source_path = item.path_lower
+        file_name = os.path.basename(source_path)
+        _, extension = os.path.splitext(source_path)
+
+        # Find out if there's media info available
+        if (item.media_info is not None and not
+            item.media_info.is_pending()):
+            year, month = parse_time_taken(item)
         else:
-            logger.debug('No new files in: %s. Exiting.' % cfg.source_dir)
-            sys.exit(1)
+            # Try parsing year, month and extension from file name
+            year, month, extension = get_info_from_file_name(source_path)
+            logger.debug('Year and month from file name: ' +
+                         year + ' ' + month)
+            logger.debug('File extension: ' + extension)
 
-        # Iterate over metadata contents
-        for item in result.entries:
+        # Validate file extension
+        if extension in cfg.pics_types:
+            is_photo = True
+        elif extension in cfg.vids_types:
+            is_video = True
 
-            # Default values
-            is_photo = False
-            is_video = False
-            year = ''
-            month = ''
-            target_path = ''
-
-            # Skip deleted files and folders
-            if (isinstance(item, dropbox.files.DeletedMetadata) or
-                isinstance(item, dropbox.files.FolderMetadata)):
-                continue
-
-            # Item metadata
-            logger.debug('File metadata: ' + str(item))
-
-            # Get source path and file name
-            source_path = item.path_lower
-            file_name = os.path.basename(source_path)
-            _, extension = os.path.splitext(source_path)
-
-            # Find out if there's media info available
-            if (item.media_info is not None and
-            not item.media_info.is_pending()):
-                year, month = parse_time_taken(item)
+        # Build target folder path
+        if year and month:
+            # Handle 1 vs 2 target folders option
+            if cfg.one_target_dir:
+                if is_photo or is_video:
+                    target_path = create_dir_tree(cfg.target_dir_common,
+                                                  year, month)
             else:
-                # Try parsing year, month and extension from file name
-                year, month, extension = get_info_from_file_name(source_path)
-                logger.debug('Year and month from file name: '
-                             + year + ' ' + month)
-                logger.debug('File extension: ' + extension)
-
-            # Validate file extension
-            if extension in cfg.pics_types:
-                is_photo = True
-            elif extension in cfg.vids_types:
-                is_video = True
-
-            # Build target folder path
-            if year and month:
-                # Handle 1 vs 2 target folders option
-                if cfg.one_target_dir:
-                    if is_photo or is_video:
-                        target_path = create_dir_tree(cfg.target_dir_common,
-                                                      year, month)
+                if is_photo:
+                    target_path = create_dir_tree(cfg.target_dir1,
+                                                  year,
+                                                  month,
+                                                  media_type=cfg.pics_desc)
+                elif is_video:
+                    target_path = create_dir_tree(cfg.target_dir2,
+                                                  year,
+                                                  month,
+                                                  media_type=cfg.vids_desc)
                 else:
-                    if is_photo:
-                        target_path = create_dir_tree(cfg.target_dir1,
-                                                      year,
-                                                      month,
-                                                      media_type=cfg.pics_desc)
-                    elif is_video:
-                        target_path = create_dir_tree(cfg.target_dir2,
-                                                      year,
-                                                      month,
-                                                      media_type=cfg.vids_desc)
-                    else:
-                        logger.debug('Invalid file type')
+                    logger.debug('Invalid file type')
 
-            # Move file(s)
-            if target_path:
-                move_file(source_path, target_path, file_name)
-                print "move file"
-            else:
-                # Unsorted folder will be created automatically
-                # if it doesn't exist
-                move_file(source_path, cfg.unsorted_dir, file_name)
-                print "passing unsorted move file"
+        # Move file(s)
+        if target_path:
+            move_file(source_path, target_path, file_name)
+        else:
+            # Unsorted folder will be created automatically
+            # if it doesn't exist
+            move_file(source_path, cfg.unsorted_dir, file_name)
 
-        # Upload log
-        upload_log_file()
+    # Upload log
+    upload_log_file()
 
 if __name__ == "__main__":
     main()
