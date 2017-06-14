@@ -151,7 +151,7 @@ def create_dir_tree(target_path, year, month, media_type=''):
     try:
         db_client.files_create_folder(complete_path)
     except dropbox.exceptions.ApiError as e:
-        logger.debug('*** Dropbox API error: %s' % e)
+        # logger.debug('*** Dropbox API error: %s' % e)
         logger.debug('Target folder ' + complete_path + ' already exists?')
 
     return complete_path
