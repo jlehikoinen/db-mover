@@ -151,8 +151,8 @@ def create_dir_tree(target_path, year, month, media_type=''):
     try:
         db_client.files_create_folder(complete_path)
     except dropbox.exceptions.ApiError as e:
-        logger.debug('*** Dropbox API error', e)
-        logger.debug('Target folder ' + complete_path + ' probably already exists?')
+        logger.debug('*** Dropbox API error: ', e)
+        logger.debug('Target folder ' + complete_path + ' already exists?')
 
     return complete_path
 
@@ -178,7 +178,7 @@ def move_file(source_path, target_path, file_name):
         db_client.files_move(source_path,
                              os.path.join(target_path, file_name))
     except dropbox.exceptions.ApiError as e:
-        logger.debug('*** Dropbox API error', e)
+        logger.debug('*** Dropbox API error: ', e)
         file_name = file_name_base + '_' + date_time + extension
         logger.info('File already exists in ' + last_path +
                     ' folder. New name: ' + file_name)
@@ -226,7 +226,7 @@ def main():
     try:
         result = db_client.files_list_folder(cfg.source_dir, include_media_info=True)
     except dropbox.exceptions.ApiError as e:
-        logger.debug('*** Dropbox API error', e)
+        logger.debug('*** Dropbox API error: ', e)
         sys.exit(1)
 
     if len(result.entries) > 0:
