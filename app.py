@@ -14,7 +14,7 @@ import config as cfg
 """
 Notes
 
-- Dropbox uid is now ignored in response parsing
+- Dropbox uid is now ignored in parsing response
 
 """
 
@@ -58,20 +58,12 @@ def challenge():
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
-    """Receive a list of changed user IDs from Dropbox and process each.
-    One uid in delta > users
-    TODO
-
+    """Validate request and run main script.
     """
 
     # Make sure this is a valid request from Dropbox
     if not validate_request():
         abort(403)
-
-    # for uid in json.loads(request.data)['delta']['users']:
-
-    # Call db_mover main hook
-    # threading.Thread(target=db_mover.main, args=(uid,)).start()
 
     db_mover.main()
 

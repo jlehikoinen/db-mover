@@ -10,7 +10,7 @@ import dropbox
 import config as cfg
 
 """
-TODO
+Notes
 
 - Possibly existing cursor and 'files_list_folder_continue' method are ignored
 - log file download/upload testing?
@@ -213,24 +213,15 @@ def parse_time_taken(item):
 
     return year, month
 
-# Temp ???
-# def main(uid):
-def main():
-    """Main hook.
 
-    Parameters
-        uid: user id from webhook notification request
-    """
+def main():
+    """Main hook."""
 
     logger.debug('STARTING WEBHOOK')
-    # logger.debug('UID: ' + str(uid))
 
     # Check if Redis lockfile exists
     lockfile_exists = redis_client.exists('lockfile')
     logger.debug('Lockfile exists: ' + str(lockfile_exists))
-
-    # Temp
-    # lockfile_exists = False
 
     if not lockfile_exists:
 
@@ -243,10 +234,10 @@ def main():
         if len(result.entries) > 0:
             # Create a lockfile to Redis and set expiration
             redis_client.setex('lockfile', 'IAMALOCKFILE', cfg.lockfile_exp)
-
             # Download log file
             get_log_file()
         else:
+            logger.debug('No new files in: %s. Exiting.' % cfg.source_dir)
             sys.exit(1)
 
         # Iterate over metadata contents

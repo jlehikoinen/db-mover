@@ -17,16 +17,6 @@ target_dir_common = '/My Media Archive'
 target_dir1 = '/Kuvat ja videot/Kuvat'
 target_dir2 = '/Kuvat ja videot/Videot'
 
-
-
-
-# Temp
-target_dir1 = '/Apps/DB Mover/test_photos'
-target_dir2 = '/Apps/DB Mover/test_videos'
-
-
-
-
 # Unsorted files location
 unsorted_dir = '/Apps/DB Mover/Unsorted Media Files'
 
