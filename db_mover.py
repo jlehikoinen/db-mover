@@ -12,7 +12,8 @@ import config as cfg
 """
 Notes
 
-- Possibly existing cursor and 'files_list_folder_continue' method are ignored temporarily
+- Possibly existing cursor and 'files_list_folder_continue' method are
+  ignored temporarily
 
 """
 
@@ -41,8 +42,8 @@ simple_format = logging.Formatter('%(asctime)s - %(levelname)s: %(message)s',
 handler.setFormatter(simple_format)
 logger.addHandler(handler)
 
-# Helper functions
 
+# Helper functions
 def get_log_file():
     """Download log file from Dropbox.
     Uses Dropbox's 'files_download_to_file' method
@@ -79,15 +80,15 @@ def item_exists(path):
     """
 
     try:
-        path_metadata = db_client.files_get_metadata(path, include_deleted=True)
-        # logger.debug('File metadata: ' + str(path_metadata))
+        path_md = db_client.files_get_metadata(path, include_deleted=True)
+        # logger.debug('File metadata: ' + str(path_md))
 
         # Check if file is 'deleted'
-        if (isinstance(path_metadata, dropbox.files.DeletedMetadata)):
+        if (isinstance(path_md, dropbox.files.DeletedMetadata)):
             logger.debug(path + ' is deleted')
             return False
     except dropbox.exceptions.ApiError as e:
-        print('*** Dropbox API error', e)
+        logger.debug('*** Dropbox API error: ', e)
         return False
 
     return True
@@ -142,7 +143,7 @@ def create_dir_tree(target_path, year, month, media_type=''):
         complete_path: full target path string (e.g. path/to/target/2015/2015-02)
     """
 
-    complete_path ='%s/%s/%s-%s%s' % (target_path, year, year, month, media_type)
+    complete_path = '%s/%s/%s-%s%s' % (target_path, year, year, month, media_type)
 
     # if not item_exists(complete_path):
 
@@ -151,8 +152,7 @@ def create_dir_tree(target_path, year, month, media_type=''):
         db_client.files_create_folder(complete_path)
     except dropbox.exceptions.ApiError as e:
         # print('*** Dropbox API error', e)
-        logger.debug('Target folder ' + complete_path +
-                         ' probably already exists?')
+        logger.debug('Target folder ' + complete_path + ' probably already exists?')
 
     return complete_path
 
@@ -181,10 +181,9 @@ def move_file(source_path, target_path, file_name):
         print('*** Dropbox API error', e)
         print('Renaming file')
         file_name = file_name_base + '_' + date_time + extension
-        logger.info('File already exists in ' + last_path
-                    + ' folder. New name: ' + file_name)
-        db_client.files_move(source_path,
-                             os.path.join(target_path, file_name))
+        logger.info('File already exists in ' + last_path +
+                    ' folder. New name: ' + file_name)
+        db_client.files_move(source_path, os.path.join(target_path, file_name))
 
 
 def parse_time_taken(item):
@@ -263,14 +262,14 @@ def main():
             _, extension = os.path.splitext(source_path)
 
             # Find out if there's media info available
-            if (item.media_info is not None and
-            not item.media_info.is_pending()):
+            if (item.media_info is not None and not
+                item.media_info.is_pending()):
                 year, month = parse_time_taken(item)
             else:
                 # Try parsing year, month and extension from file name
                 year, month, extension = get_info_from_file_name(source_path)
-                logger.debug('Year and month from file name: '
-                             + year + ' ' + month)
+                logger.debug('Year and month from file name: ' +
+                             year + ' ' + month)
                 logger.debug('File extension: ' + extension)
 
             # Validate file extension
@@ -303,12 +302,10 @@ def main():
             # Move file(s)
             if target_path:
                 move_file(source_path, target_path, file_name)
-                print "move file"
             else:
                 # Unsorted folder will be created automatically
                 # if it doesn't exist
                 move_file(source_path, cfg.unsorted_dir, file_name)
-                print "passing unsorted move file"
 
         # Upload log
         upload_log_file()
