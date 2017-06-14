@@ -5,7 +5,7 @@ import re
 import sys
 import time
 
-# import redis
+import redis
 import dropbox
 import config as cfg
 
@@ -16,7 +16,6 @@ TODO
 - log file download/upload testing?
 
 """
-
 
 # API token
 access_token = os.environ['ACCESS_TOKEN']
