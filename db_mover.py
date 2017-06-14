@@ -28,8 +28,8 @@ access_token = os.environ['ACCESS_TOKEN']
 db_client = dropbox.Dropbox(access_token)
 
 # Redis
-# redis_url = os.environ['REDISTOGO_URL']
-# redis_client = redis.from_url(redis_url)
+redis_url = os.environ['REDISTOGO_URL']
+redis_client = redis.from_url(redis_url)
 
 # Dropbox date & time format
 # Example: 2017-06-07 14:25:03
@@ -234,7 +234,7 @@ def main():
     logger.debug('Lockfile exists: ' + str(lockfile_exists))
 
     # Temp
-    lockfile_exists = False
+    # lockfile_exists = False
 
     if not lockfile_exists:
 
