@@ -230,8 +230,8 @@ def main():
     # logger.debug('UID: ' + str(uid))
 
     # Check if Redis lockfile exists
-    # lockfile_exists = redis_client.exists('lockfile')
-    # logger.debug('Lockfile exists: ' + str(lockfile_exists))
+    lockfile_exists = redis_client.exists('lockfile')
+    logger.debug('Lockfile exists: ' + str(lockfile_exists))
 
     # Temp
     lockfile_exists = False
@@ -246,7 +246,7 @@ def main():
 
         if len(result.entries) > 0:
             # Create a lockfile to Redis and set expiration
-            # redis_client.setex('lockfile', 'IAMALOCKFILE', cfg.lockfile_exp)
+            redis_client.setex('lockfile', 'IAMALOCKFILE', cfg.lockfile_exp)
 
             # Download log file
             get_log_file()
@@ -316,12 +316,12 @@ def main():
 
             # Move file(s)
             if target_path:
-                # move_file(source_path, target_path, file_name)
+                move_file(source_path, target_path, file_name)
                 print "move file"
             else:
                 # Unsorted folder will be created automatically
                 # if it doesn't exist
-                # move_file(source_path, cfg.unsorted_dir, file_name)
+                move_file(source_path, cfg.unsorted_dir, file_name)
                 print "passing unsorted move file"
 
         # Upload log
