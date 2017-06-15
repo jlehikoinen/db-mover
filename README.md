@@ -1,12 +1,14 @@
 Photo Management using Dropbox Core API and Heroku
 ==================================================
 
+**Update 20170615: Compliant with Dropbox API v2**
+
 This is the 3rd iteration of my photo and video management solution. The first version can be found [here](https://github.com/jlehikoinen/media-management-helper). I wanted to have the solution to be independent of running anything at home on a Mac mini and run this completely in the cloud. This was also good opportunity to learn how Heroku works and how to interact with Dropbox Core API. See the complete photo management solution [here](http://www.trrt.me/#!./md/photo_management.md).
 
 The beef?
 ---------
 
-> `db_mover.py` script utilizes Dropbox API to move the photo from Camera Uploads folder to a correct target folder based on file metadata and creates the target folder if doesn't exist previously.
+> `db_mover.py` script utilizes Dropbox API to move the photo/video from Camera Uploads folder to a correct target folder based on file metadata and creates the target folder if doesn't exist previously.
 
 This version is using [Dropbox Core API  webhooks](https://www.dropbox.com/developers/webhooks/docs) and Python web app running in Heroku. The web app part is heavily based on the [Markdown Webhook](https://github.com/dropbox/mdwebhook) example.
 
@@ -19,7 +21,7 @@ The main script `db_mover.py` creates a key-value pair to Redis when new files a
 **Requirements:**
 
 * [Dropbox](https://www.dropbox.com/) account
-* [Carousel](https://itunes.apple.com/us/app/carousel-by-dropbox/id825931374?mt=8) app
+* [Dropbox](https://itunes.apple.com/us/app/dropbox/id327630330?mt=8) iOS app (with Camera Uploads enabled)
 * [Heroku](https://www.heroku.com/) account
 * [Heroku Toolbelt](https://toolbelt.heroku.com) installed
 * Credit card for registering [Heroku add-ons](https://addons.heroku.com)
@@ -284,8 +286,6 @@ Take a couple of photos and upload them to Dropbox. See the log for debug inform
 Go to Dropbox and see the photos in new location: e.g. `My Media Archive/2015/2015-03`
 
 Check the Dropbox log file: `My Logs/db-webhook.txt`
-
-_Sometimes the web app reacts "slowly" and doesn't move the file to target folder instantly. This is because of the Redis lockfile and Dropbox webhook /delta behavior. To work around this, edit some file in Dropbox or take another photo and upload it. This should be fixed in the future.._
 
 After the testing, scale down the Heroku dyno (optional):
 
