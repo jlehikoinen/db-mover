@@ -51,7 +51,7 @@ Settings:
 * No - My app needs access to files already on Dropbox
 * All file types - My app needs access to a user's full Dropbox. Only supported via the Core API.
 
-![Dropbox Core API](https://dl.dropboxusercontent.com/u/3972607/GitHub/Dropbox-CoreAPI-app.png)
+![Dropbox Core API](./Dropbox-CoreAPI-app.png)
 
 Other settings (optional):
 
